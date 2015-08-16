@@ -3,7 +3,8 @@ Reproducible Research
 
 ## Loading and Prepocesiing data
 
-```{r, echo=TRUE}
+```{r, echo=TRUE, results='hide'}
+
 activity<-read.csv("activity.csv")
 noNA<-na.omit(activity)
 ```
