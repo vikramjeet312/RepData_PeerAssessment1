@@ -1,25 +1,74 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+Reproducible Research
+=====================
 
+## Loading and Prepocesiing data
 
-## Loading and preprocessing the data
+```{r, echo=TRUE}
+activity<-read.csv("activity.csv")
+noNA<-na.omit(activity)
+```
 
+# What is the total number of steps taken per day?
 
+```{r, echo=TRUE}
+stepsPerDay<- aggregate(steps~date, noNA, sum)
+hist(stepsPerDay$steps, breaks=10, xlab="Steps per Day")
+rmean<-mean(stepsPerDay$steps)
+rmedian<-median(stepsPerDay$steps)
+```
 
-## What is mean total number of steps taken per day?
-
-
+The mean is `r rmean` and median is `r rmedian`
 
 ## What is the average daily activity pattern?
 
+```{r, echo=TRUE}
+stepsByInterval<- aggregate(steps~interval, noNA, mean)
+plot(stepsByInterval$interval, stepsByInterval$steps, type="l", xlab="5 minute Interval", ylab="Average number of steps")
+maxInterval<- stepsByInterval[which.max(stepsByInterval$steps),1]
+```
 
+The 5-minute interval with the maximum average steps is `r maxInterval`
 
 ## Imputing missing values
 
+```{r, echo=TRUE}
+missingValues<- sum(!complete.cases(activity))
+```
 
+The number or missing values in the dataset is `r missingValues`
+
+Now, filling in missing values with the mean 5-minute interval values
+```{r, echo=TRUE}
+newData<- activity
+for(i in 1:nrow(newData)){
+if(is.na(newData$steps[i])){
+  newData$steps[i]<-stepsByInterval[which(stepsByInterval$interval==newData$interval[i]),]$steps
+}}
+```
+
+Recounting total steps per day and creating histogram
+
+```{r, echo=TRUE}
+newStepsPerDay<- aggregate(steps~date, newData, sum)
+hist(newStepsPerDay$steps, breaks=10, xlab="Adjusted Steps per Day")
+newMean<- mean(newStepsPerDay$steps)
+newMedian<-median(newStepsPerDay$steps)
+meanDiff<- rmean-newMean
+medianDiff<- rmedian-newMedian
+```
+
+the imputed data mean is `r newMean`
+the imputed data median is `r newMedian`
+
+the difference in mean values is `r meanDiff`
+the difference in median values is `r medianDiff`
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r,echo=TRUE}
+newData$date<- as.Date(newData$date)
+newData$dow<- as.factor(ifelse(weekdays(newData$date)%in% c("Saturday","Sunday"), "weekend", "weekday"))
+library(lattice)
+xyplot(newData$steps~newData$interval|newData$dow, layout=c(1,2), type="l", xlab="Interval", ylab="Steps")
+```
+
